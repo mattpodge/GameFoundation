@@ -6,21 +6,30 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
 
+    public CharacterController controller;
+
     [Header("Input Settings")]
     public PlayerInput playerActions;
-
+    public float playerSpeed = 10f;
     private Vector3 rawInputMovement;
+    private Vector3 smoothInputMovement;
 
-    void Update()
+    private void Awake()
     {
-        transform.Translate(rawInputMovement * 10 * Time.deltaTime);
+    }
+
+    void FixedUpdate()
+    {
     }
 
     public void OnMovement(InputAction.CallbackContext value)
     {
         Vector2 movementInput = value.ReadValue<Vector2>();
-        rawInputMovement = new Vector3(movementInput.x, 0, 0);
+        rawInputMovement = new Vector3(movementInput.x, 0f, movementInput.y);
+    }
 
+    public void OnJump(InputAction.CallbackContext value)
+    {
     }
 
 }
