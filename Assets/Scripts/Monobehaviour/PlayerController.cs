@@ -10,8 +10,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Input Settings")]
     public PlayerInput playerInput;
-    private Vector2 rawInputMovement;
-    private Vector3 moveDir;
+    private Vector3 rawInputMovement;
     private Vector3 playerVelocity;
 
     public float playerJumpHeight = 2f;
@@ -32,15 +31,19 @@ public class PlayerController : MonoBehaviour
     public LayerMask groundLayer;
     private bool isGrounded = true;
 
+    private Transform cameraT;
+
 
     private void Awake()
     {
+        cameraT = Camera.main.transform;
     }
 
     void Update()
     {
         // Check our plyer is grounded with a child object
         isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundLayer);
+
         // Set downward velocity when the player is on the ground
         if (isGrounded && playerVelocity.y < 0)
         {
@@ -52,17 +55,21 @@ public class PlayerController : MonoBehaviour
         controller.Move(playerVelocity * Time.deltaTime);
 
         // Control speed based on if we're on the ground or in the air
-        float targetSpeed = (isGrounded ? groundSpeed : airSpeed) * moveDir.magnitude;
+        float targetSpeed = (isGrounded ? groundSpeed : airSpeed) * rawInputMovement.magnitude;
         playerSpeed = Mathf.SmoothDamp(playerSpeed, targetSpeed, ref speedSmoothVelocity, speedSmoothTime);
 
-        // Simply move our player based on input directions
-        controller.Move(moveDir * playerSpeed * Time.deltaTime);
-
-        // Make the player face the direction of travel
-        if (moveDir != Vector3.zero)
+        if (rawInputMovement != Vector3.zero)
         {
-            float targetAngle = Mathf.Atan2(moveDir.x, moveDir.z) * Mathf.Rad2Deg;
-            transform.eulerAngles = Vector3.up * Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+            // Rotate player based on where the camera is pointing
+            float targetAngle = Mathf.Atan2(rawInputMovement.x, rawInputMovement.z) * Mathf.Rad2Deg + cameraT.eulerAngles.y;
+            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+            transform.rotation = Quaternion.Euler(0f, angle, 0f);
+
+            // Set forward as the angle of the camera
+            Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+
+            // Move the player
+            controller.Move(moveDir * playerSpeed * Time.deltaTime);
         }
 
     }
@@ -75,8 +82,7 @@ public class PlayerController : MonoBehaviour
     public void OnMovement(InputAction.CallbackContext value)
     {
         Vector2 inputMovement = value.ReadValue<Vector2>();
-        rawInputMovement = new Vector2(inputMovement.x, inputMovement.y);
-        moveDir = new Vector3(rawInputMovement.x, 0f, rawInputMovement.y).normalized;
+        rawInputMovement = new Vector3(inputMovement.x, 0f, inputMovement.y);
     }
 
     public void OnJump(InputAction.CallbackContext value)
