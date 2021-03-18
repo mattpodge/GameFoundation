@@ -25,6 +25,9 @@ public class PlayerController : MonoBehaviour
     public float turnSmoothTime = 0.2f;
     private float turnSmoothVelocity;
 
+    public Animator animator;
+    private float animPercent;
+
     [Header("Grounded Settings")]
     public Transform groundCheck;
     public float groundDistance = 0.2f;
@@ -56,7 +59,9 @@ public class PlayerController : MonoBehaviour
 
         // Control speed based on if we're on the ground or in the air
         float targetSpeed = (isGrounded ? groundSpeed : airSpeed) * rawInputMovement.magnitude;
+        animPercent = targetSpeed * rawInputMovement.magnitude;
         playerSpeed = Mathf.SmoothDamp(playerSpeed, targetSpeed, ref speedSmoothVelocity, speedSmoothTime);
+        animator.SetFloat("speedPercent", animPercent);
 
         if (rawInputMovement != Vector3.zero)
         {
@@ -77,6 +82,7 @@ public class PlayerController : MonoBehaviour
     void Jump()
     {
         playerVelocity.y += Mathf.Sqrt(playerJumpHeight * -2f * gravity);
+        Debug.Log("Jump");
     }
 
     public void OnMovement(InputAction.CallbackContext value)
